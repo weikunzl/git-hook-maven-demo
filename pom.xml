@@ -18,7 +18,7 @@
                 <version>3.4.1</version>
                 <configuration>
                     <installHooks>
-                        <pre-commit>.mvn/.githooks/prepare-commit-msg</pre-commit>
+                        <prepare-commit-msg>.mvn/.githooks/prepare-commit-msg</prepare-commit-msg>
                     </installHooks>
                 </configuration>
                 <executions>
@@ -26,6 +26,27 @@
                         <goals>
                             <goal>install</goal>
                         </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>exec-maven-plugin</artifactId>
+                <version>3.1.0</version>
+                <executions>
+                    <execution>
+                        <id>script-chmod</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>exec</goal>
+                        </goals>
+                        <configuration>
+                            <executable>chmod</executable>
+                            <arguments>
+                                <argument>755</argument>
+                                <argument>${basedir}/.mvn/.githooks/prepare-commit-msg</argument>
+                            </arguments>
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
