@@ -1,0 +1,37 @@
+#!/bin/sh
+
+commitMsgFile=$1
+commitSource=$2
+commitMsgContent=$(cat "$commitMsgFile")
+regString='^\[[0-9]{6,10}\](build|ci|docs|feat|fix|perf|refactor|style|test):.*$'
+
+echo commitMsgFile "${commitMsgFile}"
+echo commitSource "${commitSource}"
+
+# merge 不做此校验
+if [ "${commitSource}" = merge ];then
+    exit 0
+fi
+
+# 检验是否符合格式
+if [[ $commitMsgContent =~ $regString ]]
+then
+    exit 0
+fi
+
+# 不符合格式进行提示
+echo "------------------"
+echo "您的提交信息不符合规范格式： '$commitMsgContent'"
+echo "正确格式为：[故事编号]标识:commit message"
+echo "您可以使用一下标识:"
+echo "build :影响构建系统或外部依赖关系的更改（示例范围：pom，npm)"
+echo "ci : 更改我们的持续集成文件和脚本（示例范围：Jenkins)"
+echo "docs : 仅文档更改"
+echo "feat : 一个新功能"
+echo "fix : 修复错误"
+echo "perf : 改进性能的代码更改"
+echo "refactor : 代码更改，既不修复错误也不添加功能"
+echo "style : 不影响代码含义的变化（空白，格式化，缺少分号等）"
+echo "test : 添加缺失测试或更正现有测试"
+
+exit 1
