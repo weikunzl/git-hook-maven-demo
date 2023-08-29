@@ -19,6 +19,7 @@
                 <configuration>
                     <installHooks>
                         <prepare-commit-msg>.mvn/.githooks/prepare-commit-msg</prepare-commit-msg>
+                        <pre-push>.mvn/.githooks/pre-push</pre-push>
                     </installHooks>
                 </configuration>
                 <executions>
@@ -45,6 +46,7 @@
                             <arguments>
                                 <argument>755</argument>
                                 <argument>${basedir}/.mvn/.githooks/prepare-commit-msg</argument>
+                                <argument>${basedir}/.mvn/.githooks/pre-push</argument>
                             </arguments>
                         </configuration>
                     </execution>
