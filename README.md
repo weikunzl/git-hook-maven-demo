@@ -1,95 +1,22 @@
 # git-hook-maven-demo
+原理是利用git原本自带的hook功能。 
 
-## Setup
-1. 创建githook模板文件“prepare-commit-msg”，放在.githooks目录下。
-```shell
-#!/bin/sh
+Git本地的hook功能是一种机制，它允许您在特定的Git操作（例如提交、推送、合并等）发生时自动触发自定义脚本或命令。这使您可以在这些操作发生之前或之后执行额外的逻辑或验证。 
 
-commitMsgFile=$1
-commitSource=$2
-commitMsgContent=$(cat "$commitMsgFile")
-regString='^\[[0-9]{6,10}\](build|ci|docs|feat|fix|perf|refactor|style|test):.*$'
+Git本地的hook是以脚本的形式存在于Git仓库的.git/hooks目录中。这个目录包含了多个示例 hook 脚本文件，每个文件代表一个特定的Git操作。 常用的Git本地hook：pre-commit 、 prepare-commit-msg 、 pre-push
 
-echo commitMsgFile "${commitMsgFile}"
-echo commitSource "${commitSource}"
+## 配置步骤
+1. 拷贝 git hook 模板文件```.mvn/.githooks/prepare-commit-msg```，放在您的项目的.mvn/.githooks目录下。
+2. 添加插件git-build-hook-maven-plugin插件。参考pom.xml中的配置
+   > 添加installHooks >  prepare-commit-msg 节点指定模板文件。*** 插件会在执行 ```mvn install``` 是自动将文件复制到项目的.git/hooks项目***
+3. 添加插件exec-maven-plugin插件，参考pom.xml中的配置。
+   > 权限配置，通过命令（chmod 755）给文件配置上可执行权限。
+4. 配置完成后执行 mvn install，使命令生效
+   > prepare-commit-msg 的模板文件会被复制到```.git/hooks```目录下，使 git hook 功能生效
 
-# merge 不做此校验
-if [ "${commitSource}" = merge ];then
-    exit 0
-fi
+## Notes: 使用与验证
+1. 使用错误格式提交：提交信息为 ```first commit``` ，会出现提交错误信息，证明githook已经正常工作。
 
-# 检验是否符合格式
-if [[ $commitMsgContent =~ $regString ]]
-then
-    exit 0
-fi
-
-# 不符合格式进行提示
-echo "------------------"
-echo "您的提交信息不符合规范格式： '$commitMsgContent'"
-echo "正确格式为：[故事编号]标识:commit message"
-echo "您可以使用一下标识:"
-echo "build :影响构建系统或外部依赖关系的更改（示例范围：pom，npm)"
-echo "ci : 更改我们的持续集成文件和脚本（示例范围：Jenkins)"
-echo "docs : 仅文档更改"
-echo "feat : 一个新功能"
-echo "fix : 修复错误"
-echo "perf : 改进性能的代码更改"
-echo "refactor : 代码更改，既不修复错误也不添加功能"
-echo "style : 不影响代码含义的变化（空白，格式化，缺少分号等）"
-echo "test : 添加缺失测试或更正现有测试"
-
-exit 1
-```
-2. pom.xml添加插件参考下面代码。
-3. git-build-hook-maven-plugin 添加installHooks >  prepare-commit-msg 节点指定模板文件。*** 插件会在执行 ```mvn install``` 是自动将文件copy到项目的.git/hooks项目***
-4. exec-maven-plugin 添加权限配置，通过命令（chmod 755）给文件配置上可执行权限。
-```xml
-<plugins>
-            <plugin>
-                <groupId>com.rudikershaw.gitbuildhook</groupId>
-                <artifactId>git-build-hook-maven-plugin</artifactId>
-                <version>3.4.1</version>
-                <configuration>
-                    <installHooks>
-                        <prepare-commit-msg>.mvn/.githooks/prepare-commit-msg</prepare-commit-msg>
-                    </installHooks>
-                </configuration>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>install</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>3.1.0</version>
-                <executions>
-                    <execution>
-                        <id>script-chmod</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                        <configuration>
-                            <executable>chmod</executable>
-                            <arguments>
-                                <argument>755</argument>
-                                <argument>${basedir}/.mvn/.githooks/prepare-commit-msg</argument>
-                            </arguments>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-        </plugins>
-```
-## 使用与验证方法
-Step 1. 配置完成后执行 mvn install，使命令生效。
-
-Step 2. 提交信息填写格式为 ```first commit``` ，会出现提交错误信息，证明githook已经正常工作。
-
-Step 3. 提交信息填写格式为 ```^\[[0-9]{6,10}\](build|ci|docs|feat|fix|perf|refactor|style|test):.*$'``` commit顺利完成正常提交。
-例如：[000001]feat: first commit
+2. 使用正确格式提交：提交信息为 ```[000001]feat: first commit```，成功提交
+   > 格式修改```prepare-commit-msg```文件中的正则表达式。
+   > 默认正则为```^\[[0-9]{6,10}\](build|ci|docs|feat|fix|perf|refactor|style|test):.*$'``` 。
